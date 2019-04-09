@@ -4,3 +4,6 @@
 *.db
 my.db
 my.db
+TOKEN.txt
+CAD DATA.xlsx
+client_secret.json
