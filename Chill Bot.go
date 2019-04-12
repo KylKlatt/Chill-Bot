@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,16 +15,19 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/youtube/v3"
 )
 
-const missingClientSecretsMessage = `
-Please configure OAuth 2.0`
+const missingClientSecretsMessage = `Please configure OAuth 2.0`
+
+const xp_multiplier = 2.0
 
 // Append this string with error messages
 var error_string string
@@ -32,6 +36,7 @@ var error_string string
 var BotID string
 
 var VC *discordgo.VoiceConnection
+var Vc discordgo.VoiceConnection
 
 // something that isn't used for blackjack
 type deck struct {
@@ -46,6 +51,22 @@ type blackjack_game struct {
 	bet        int
 	dealerhand int
 	playerhand int
+}
+
+type CADIAN struct {
+	xpi int
+	xps string
+
+	leveli int
+	levels string
+
+	xpuntills   string
+	untillwhats string
+
+	slicesi int
+	slicess string
+
+	IAM string
 }
 
 var blackjack blackjack_game
@@ -65,6 +86,18 @@ const support_r string = "458036299732090892"
 const color_r string = "534412981694627864"
 
 var CBPresence *discordgo.Presence
+
+///////////////////////
+/////////////////////// google time
+///////////////////////
+var (
+	query      = flag.String("query", "Fidget Spinner minecraft tutorial", "Search term")
+	maxResults = flag.Int64("max-results", 25, "Max YouTube results")
+)
+
+///////////////////////
+/////////////////////// google time
+///////////////////////
 
 // getClient uses a Context and Config to retrieve a Token
 // then generate a Client. It returns the generated Client.
@@ -159,9 +192,17 @@ func channelsListByUsername(service *youtube.Service, part string, forUsername s
 		response.Items[0].Statistics.ViewCount))
 }
 
+func printIDs(sectionName string, matches map[string]string) {
+	fmt.Printf("%v:\n", sectionName)
+	for id, title := range matches {
+		fmt.Printf("[%v] %v\n", id, title)
+	}
+	fmt.Printf("\n\n")
+}
+
 func main() {
 	//////////////////////////////////////
-	//////////////////////////////////////
+	////////////////////////////////////// youtube
 	//////////////////////////////////////
 	ctx := context.Background()
 
@@ -183,7 +224,7 @@ func main() {
 
 	channelsListByUsername(service, "snippet,contentDetails,statistics", "GoogleDevelopers")
 	//////////////////////////////////////
-	//////////////////////////////////////
+	////////////////////////////////////// youtube
 	//////////////////////////////////////
 
 	b, err = ioutil.ReadFile("TOKEN.txt") // b has type []byte
@@ -205,36 +246,15 @@ func main() {
 	} else {
 		fmt.Println(u)
 	}
-	//u.Assets.SmallText = "Asexual BlackJack"
-	BotID = u.ID
 
-	//////
-	/*
-		file := xlsx.NewFile()
-		sheet, err := file.AddSheet("Sheet1")
-		if err != nil {
-			fmt.Printf(err.Error())
-		}
-		row := sheet.AddRow()
-		cell := row.AddCell()
-		cell.Value = BotID
-		err = file.Save("CAD DATA.xlsx")
-		if err != nil {
-			fmt.Printf(err.Error())
-		}
-	*/
-	///////
+	BotID = u.ID
 
 	dg.AddHandler(messageHandler)
 	dg.AddHandler(addreactionHandler)
 	dg.AddHandler(subreactionHandler)
 
-	dg.AddHandler(presenceHandler)
-	// this if for telling if people join or leave, not used rn
 	dg.AddHandler(MemberJoinHandler)
 	dg.AddHandler(MemberLeaveHandler)
-
-	//	dg.AddHandler(messageDeleteHandler)
 
 	err = dg.Open()
 
@@ -242,6 +262,41 @@ func main() {
 		fmt.Println(err.Error() + " Error 3")
 		return
 	}
+
+	///
+	/// youtube search
+	///
+
+	call := service.Search.List("id,snippet").
+		Q(*query).
+		MaxResults(*maxResults)
+	response, err := call.Do()
+	handleError(err, "")
+
+	// Group video, channel, and playlist results in separate lists.
+	videos := make(map[string]string)
+	channels := make(map[string]string)
+	playlists := make(map[string]string)
+
+	// Iterate through each item and add it to the correct list.
+	for _, item := range response.Items {
+		switch item.Id.Kind {
+		case "youtube#video":
+			videos[item.Id.VideoId] = item.Snippet.Title
+		case "youtube#channel":
+			channels[item.Id.ChannelId] = item.Snippet.Title
+		case "youtube#playlist":
+			playlists[item.Id.PlaylistId] = item.Snippet.Title
+		}
+	}
+
+	printIDs("Videos", videos)
+	printIDs("Channels", channels)
+	printIDs("Playlists", playlists)
+
+	///
+	/// youtube search
+	///
 
 	fmt.Println("Bot is running POGGERS")
 
@@ -258,14 +313,39 @@ func messageDeleteHandler(s *discordgo.Session, m *discordgo.MessageDelete) {
 
 }*/
 
-func presenceHandler(s *discordgo.Session, p *discordgo.PresenceUpdate) {
+func VoiceSpeakingUpdateHandler(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingUpdate) {
+
+	/*
+		VCRECIEVE := make(chan *discordgo.Packet)
+		VCSEND := make(chan []int16)
+
+		dgvoice.ReceivePCM(VC, VCRECIEVE)
+
+		dgvoice.SendPCM(VC, VCSEND)
+	*/
+	//	if vs.UserID != BotID {
+	VCRECIEVE := <-vc.OpusRecv
+	fmt.Println(VCRECIEVE)
+	vc.Speaking(true)
+	vc.OpusSend <- VCRECIEVE.Opus
+	vc.Speaking(false)
+
+	//	}
+}
+
+/*
+func VoiceStateUpdateHandler(vs *discordgo.VoiceStateUpdate) {
+
+}*/
+
+/*func presenceHandler(s *discordgo.Session, p *discordgo.PresenceUpdate) {
 
 	if p.Presence.User.Username != "" {
 		//logme := p.Presence.User.Username + " Status " + p.Presence.Status
 
 		//fmt.Println(logme)
 	}
-}
+}*/
 
 func subreactionHandler(s *discordgo.Session, r *discordgo.MessageReactionRemove) {
 	if r.ChannelID == "556647040633798677" {
@@ -517,12 +597,12 @@ func keywords(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":DansGame:438526394331561993")
 	}
 
-	if strings.Contains(m.Content, "Dab") {
+	if strings.Contains(strings.ToLower(m.Content), "dab") {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":HAhaa:434488099083649049")
 		s.ChannelMessageSend(m.ChannelID, "\\ <:HAhaa:434488099083649049> >")
 	}
 
-	if strings.Contains(m.Content, "good bot") {
+	if strings.Contains(strings.ToLower(m.Content), "good bot") {
 		s.ChannelMessageSend(m.ChannelID, ":)")
 	}
 
@@ -538,22 +618,22 @@ func keywords(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":Kreygasm:465040254840340481")
 	}
 
-	if strings.Contains(m.Content, "bitch") || strings.Contains(m.Content, "Bitch") {
+	if strings.Contains(strings.ToLower(m.Content), "bitch") {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":CapitalDColon:434488099255615488")
 		s.MessageReactionAdd(m.ChannelID, m.ID, "🇧")
 	}
 
-	if strings.Contains(m.Content, "cunt") || strings.Contains(m.Content, "Cunt") {
+	if strings.Contains(strings.ToLower(m.Content), "cunt") {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":CapitalDColon:434488099255615488")
 		s.MessageReactionAdd(m.ChannelID, m.ID, "🇨")
 	}
 
-	if strings.Contains(m.Content, "Faggot") || strings.Contains(m.Content, "Fag") || strings.Contains(m.Content, "faggot") || strings.Contains(m.Content, "fag") {
+	if strings.Contains(strings.ToLower(m.Content), "faggot") || strings.Contains(strings.ToLower(m.Content), "fag") {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":CapitalDColon:434488099255615488")
 		s.MessageReactionAdd(m.ChannelID, m.ID, "🇫")
 	}
 
-	if strings.Contains(m.Content, "Retarded") || strings.Contains(m.Content, "Retard") || strings.Contains(m.Content, "retarded") || strings.Contains(m.Content, "retard") {
+	if strings.Contains(strings.ToLower(m.Content), "retard") {
 		s.MessageReactionAdd(m.ChannelID, m.ID, ":CapitalDColon:434488099255615488")
 		s.MessageReactionAdd(m.ChannelID, m.ID, "🇷")
 	}
@@ -571,6 +651,28 @@ func keywords(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 	}
 
 	return false
+}
+
+func echo(v *discordgo.VoiceConnection) {
+
+	recv := make(chan *discordgo.Packet, 2)
+	go dgvoice.ReceivePCM(v, recv)
+
+	send := make(chan []int16, 2)
+	go dgvoice.SendPCM(v, send)
+
+	v.Speaking(true)
+	defer v.Speaking(false)
+
+	for {
+
+		p, ok := <-recv
+		if !ok {
+			return
+		}
+
+		send <- p.PCM
+	}
 }
 
 func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
@@ -693,49 +795,104 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 
 		//!who
 		if m.Content == "!who" {
-			s.ChannelMessageSend(m.ChannelID, "I am a program running off Kazka's computer that he is currently working on for our discord. If you want to see what i can do, you can type ``!help``")
+			s.ChannelMessageSend(m.ChannelID, "I am a program running off Kazka's computer that he is currently working on for our discord. If you want to see what I can do, you can type ``!help``")
 		}
 
-		//!xp
-		if m.Content == "!xp" || m.Content == "!fuckyoukio" {
-			xp := xp_get(m.Author.ID)
-			s.ChannelMessageSend(m.ChannelID, "You've got "+xp+" experience!")
-
-			level_s := level_get(xp)
-			level_i, _ := strconv.Atoi(level_s)
-			if level_i > 1 {
-				s.GuildMemberRoleAdd("409907314045353984", m.Author.ID, "410520872676360193")
-			}
-			if level_i >= 10 {
-				s.GuildMemberRoleAdd("409907314045353984", m.Author.ID, "446112365055049729")
-			}
-
-			if level_i < 3 {
-				s.ChannelMessageSend(m.ChannelID, "Oh, and you're only level "+level_s+". <:OMEGALUL:434488099083386890>")
-			} else if level_i < 10 {
-				s.ChannelMessageSend(m.ChannelID, "You're also level "+level_s+". <:HAhaa:434488099083649049>")
-			} else if level_i >= 10 {
-				s.ChannelMessageSend(m.ChannelID, "Congrats you're level "+level_s+". <:FeelsGoodMan:434360842985668608> <a:Clap:434360842620895253>")
-			}
-
-			xp_i, _ := strconv.Atoi(xp)
-			if xp_i < 500 {
-				till := strconv.Itoa(500 - xp_i)
-				s.ChannelMessageSend(m.ChannelID, "You have "+till+" xp more till you are verified at 500 xp (lvl 2).")
-			} else if xp_i < 40500 {
-				till := strconv.Itoa(40500 - xp_i)
-				s.ChannelMessageSend(m.ChannelID, "You need "+till+" more xp till you reach Chill Squad at 40500xp (lvl 10).")
-			}
-
+		if strings.HasPrefix(m.Content, "!xp") || strings.HasPrefix(m.Content, "!xpc") || strings.HasPrefix(m.Content, "!slices") || strings.HasPrefix(m.Content, "!slicesc") {
+			s.ChannelMessageSend(m.ChannelID, "Depreciated, Try ``!check`` or ``!check [@]``")
 		}
 
-		//!slices
-		if m.Content == "!slices" {
-			slices := currency_get(m.Author.ID)
-			s.ChannelMessageSend(m.ChannelID, "You have "+slices+" slices!")
+		if strings.HasPrefix(m.Content, "!iam") {
+			iam_update(m.Author.ID, strings.TrimPrefix(m.Content, "!iam"))
+			s.ChannelMessageSend(m.ChannelID, "You are now \""+strings.TrimPrefix(m.Content, "!iam ")+"\"")
 		}
 
-		if m.Content == "!overflow" {
+		if strings.HasPrefix(m.Content, "!check") {
+			if m.Content == "!check" {
+				cadian := cadian_get(s, m.Author.ID, true)
+				embed := &discordgo.MessageEmbed{
+					Author: &discordgo.MessageEmbedAuthor{
+						IconURL: m.Author.AvatarURL(""),
+					},
+					Color:       0x8a72da, // purple
+					Title:       "Here are your stats " + m.Author.Username + "!",
+					Description: cadian.IAM,
+					Fields: []*discordgo.MessageEmbedField{
+						&discordgo.MessageEmbedField{
+							Name:   "Total XP",
+							Value:  cadian.xps,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   "Current Level",
+							Value:  cadian.levels,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   cadian.untillwhats,
+							Value:  cadian.xpuntills,
+							Inline: true,
+						},
+						&discordgo.MessageEmbedField{
+							Name:   "Total Slices",
+							Value:  cadian.slicess,
+							Inline: true,
+						},
+					},
+					Thumbnail: &discordgo.MessageEmbedThumbnail{
+						URL: m.Author.AvatarURL(""),
+					},
+					Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+				}
+				s.ChannelMessageSendEmbed(m.ChannelID, embed)
+			} else {
+				mentions := m.Mentions
+				howmany := len(mentions)
+				if howmany > 0 {
+					for i := 0; i < howmany; i++ {
+						cadian := cadian_get(s, mentions[i].ID, mentions[i].ID == m.Author.ID)
+						embed := &discordgo.MessageEmbed{
+							Author: &discordgo.MessageEmbedAuthor{
+								IconURL: mentions[i].AvatarURL(""),
+							},
+							Color:       0x8ad0da, // purple
+							Title:       "...Checking " + mentions[i].Username + "'s Stats!",
+							Description: cadian.IAM,
+							Fields: []*discordgo.MessageEmbedField{
+								&discordgo.MessageEmbedField{
+									Name:   "Total XP",
+									Value:  cadian.xps,
+									Inline: true,
+								},
+								&discordgo.MessageEmbedField{
+									Name:   "Current Level",
+									Value:  cadian.levels,
+									Inline: true,
+								},
+								&discordgo.MessageEmbedField{
+									Name:   cadian.untillwhats,
+									Value:  cadian.xpuntills,
+									Inline: true,
+								},
+								&discordgo.MessageEmbedField{
+									Name:   "Total Slices",
+									Value:  cadian.slicess,
+									Inline: true,
+								},
+							},
+							Thumbnail: &discordgo.MessageEmbedThumbnail{
+								URL: mentions[i].AvatarURL(""),
+							},
+							Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+						}
+						s.ChannelMessageSendEmbed(m.ChannelID, embed)
+					}
+
+				} else {
+					s.ChannelMessageSend(m.ChannelID, "????????")
+					return
+				}
+			}
 
 		}
 
@@ -747,10 +904,9 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 !who - who am I, you ask?
 !help blackjack - help for asexual blackjack
 !help roulette - roulette help
-!xp - lists experience points & level
-!xpc [@mention] - check another user's XP & level, however, maybe just ask them
-!slices - lists slices
-!slicesc [@mention] - check another user's slices, however, maybe just ask them
+!check - check your CAD stats
+!check [@mentions]- check others CAD stats
+!iam [Identity / Status / Pronouns / idc] - update your IAM
 !transfer [@mention] [number of slices] - transfer your slices to another user
 !buy - list of things you can buy with slices
 
@@ -793,34 +949,6 @@ Staff Commands:
 		if m.Content == "!help roulette" {
 			s.ChannelMessageSend(m.ChannelID, "Bruh it's roulette. >.>")
 			s.ChannelMessageSend(m.ChannelID, "Type ``!roulette`` followed by your bet to play, for example: ```!roulette 10```")
-		}
-
-		//!slicesc [@]
-		if strings.HasPrefix(m.Content, "!slicesc ") {
-			mentions := m.Mentions
-			if len(mentions) == 1 {
-				slices := currency_get(mentions[0].ID)
-				if slices != " " {
-					s.ChannelMessageSend(m.ChannelID, "User <@"+mentions[0].ID+"> has "+slices+" slices.")
-				} else {
-					s.ChannelMessageSend(m.ChannelID, "Looks I had an issue finding that user. <:FeelsBadMan:434360842377625631>")
-				}
-			}
-		}
-
-		//!xpc [@]
-		if strings.HasPrefix(m.Content, "!xpc ") {
-			mentions := m.Mentions
-			if len(mentions) == 1 {
-				xp := xp_get(mentions[0].ID)
-				lvl := level_get(xp)
-
-				if xp != " " {
-					s.ChannelMessageSend(m.ChannelID, "User <@"+mentions[0].ID+"> has "+xp+" xp, and is level "+lvl+".")
-				} else {
-					s.ChannelMessageSend(m.ChannelID, "Looks I had an issue finding that user. <:FeelsBadMan:434360842377625631>")
-				}
-			}
 		}
 
 		//!transfer [@] [amount]
@@ -944,7 +1072,7 @@ Staff Commands:
 			s.ChannelMessageSend(m.ChannelID, "```Queer Platonic Relationship (QPR)``````A relationship that is not romantic but involves a close emotional connection (Alterous) beyond what most people consider friendship.```")
 		}
 
-		if strings.Contains(dtolower, "Sensual") {
+		if strings.Contains(dtolower, "sensual") {
 			s.ChannelMessageSend(m.ChannelID, "```Sensual Attraction``````An attraction based on one of the senses, Touch, Sight, Sound, Smell and or Taste, can be non-sexual, or sexual.```")
 		}
 
@@ -1120,7 +1248,99 @@ Staff Commands:
 	//kazka commands
 	if m.Author.ID == kazka_u || m.ChannelID == botroom_c {
 
+		if strings.HasPrefix(m.Content, "!kiss") {
+			if m.Content == "!kiss" {
+				s.ChannelMessageSend(m.ChannelID, "*Kazka kisses goatboy*")
+			} else {
+
+				kisses, _ := strconv.Atoi(strings.TrimPrefix(m.Content, "!kiss "))
+
+				var i int
+				var ks string
+
+				for i < kisses {
+					i++
+					ks += " kis"
+				}
+				s.ChannelMessageSend(m.ChannelID, "*Kazka"+ks+"s'es goatboy*")
+
+			}
+		}
+
 		//!test
+
+		/*		type MessageEmbed struct {
+				URL         string                 `json:"url,omitempty"`
+				Type        string                 `json:"type,omitempty"`
+				Title       string                 `json:"title,omitempty"`
+				Description string                 `json:"description,omitempty"`
+				Timestamp   string                 `json:"timestamp,omitempty"`
+				Color       int                    `json:"color,omitempty"`
+				Footer      *MessageEmbedFooter    `json:"footer,omitempty"`
+				Image       *MessageEmbedImage     `json:"image,omitempty"`
+				Thumbnail   *MessageEmbedThumbnail `json:"thumbnail,omitempty"`
+				Video       *MessageEmbedVideo     `json:"video,omitempty"`
+				Provider    *MessageEmbedProvider  `json:"provider,omitempty"`
+				Author      *MessageEmbedAuthor    `json:"author,omitempty"`
+				Fields      []*MessageEmbedField   `json:"fields,omitempty"`
+			}*/
+
+		if m.Content == "!test" {
+
+			/*
+				type MessageEmbedAuthor struct {
+					URL          string `json:"url,omitempty"`
+					Name         string `json:"name,omitempty"`
+					IconURL      string `json:"icon_url,omitempty"`
+					ProxyIconURL string `json:"proxy_icon_url,omitempty"`
+				}*/
+			/*
+				var MEAS discordgo.MessageEmbedAuthor
+				MEAS.URL = "https://discord.gg/MEAS"
+				MEAS.Name = "MEAS NAME"
+				MEAS.ProxyIconURL = m.Author.Avatar //maybe this is working
+				MEAS.ProxyIconURL = m.Author.Avatar // who fkn knows
+
+				var MES discordgo.MessageEmbed
+				MES.URL = "https://discord.gg"
+				MES.Color = 0x00ff00
+				MES.Timestamp = "Timestamp"
+				MES.Type = "Type"
+				MES.Title = "Title"
+				MES.Description = "Description"
+
+				MES.Author = &MEAS
+			*/
+			embed := &discordgo.MessageEmbed{
+				Author:      &discordgo.MessageEmbedAuthor{},
+				Color:       0x8a72da, // purple
+				Description: "This is a discordgo embed",
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:   "I am a field",
+						Value:  "I am a value",
+						Inline: true,
+					},
+					&discordgo.MessageEmbedField{
+						Name:   "I am a second field",
+						Value:  "I am a value",
+						Inline: true,
+					},
+				},
+				Image: &discordgo.MessageEmbedImage{
+					URL: "https://cdn.discordapp.com/attachments/465639104982417419/566055220765917194/unknown.png",
+				},
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: "https://cdn.discordapp.com/attachments/465639104982417419/566055220765917194/unknown.png",
+				},
+				Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+				Title:     "I am an Embed",
+			}
+
+			s.ChannelMessageSendEmbed(m.ChannelID, embed)
+
+		}
+
 		if strings.Contains(m.Content, "!join") {
 			//if join bot channel
 			mute := false
@@ -1132,6 +1352,29 @@ Staff Commands:
 			} else {
 				if VC.Ready == true {
 					s.ChannelMessageSend(m.ChannelID, "VC joined and ready 2 go!")
+					//VC.AddHandler(VoiceSpeakingUpdateHandler)
+
+					recv := make(chan *discordgo.Packet, 2)
+					go dgvoice.ReceivePCM(VC, recv)
+
+					send := make(chan []int16, 2)
+					go dgvoice.SendPCM(VC, send)
+
+					VC.Speaking(true)
+					defer VC.Speaking(false)
+
+					for {
+
+						p, ok := <-recv
+						if !ok {
+							return false
+						}
+
+						send <- p.PCM
+					}
+
+					//					VoiceStateUpdate
+
 				}
 			}
 		}
@@ -1143,10 +1386,52 @@ Staff Commands:
 		}
 
 		if strings.HasPrefix(m.Content, "!talking") {
-			VC.Speaking(true)
+			if VC.Ready == true {
+				VC.Speaking(true)
+			} else {
+				s.ChannelMessageSend(m.ChannelID, "I'm not in VC you fucking mong")
+			}
 			return
 		}
-		VC.Speaking(false)
+
+		if strings.HasPrefix(m.Content, "!stoptalking") {
+			if VC.Ready == true {
+				VC.Speaking(false)
+			} else {
+				s.ChannelMessageSend(m.ChannelID, "I'm not in VC you fucking mong")
+			}
+			return
+		}
+		if strings.HasPrefix(m.Content, "!beep") {
+			if VC.Ready == true {
+
+				/////////
+				///////// opus / dgvoice
+				/////////
+				/*
+					c_dgp := make(chan *discordgo.Packet)
+
+
+					dgvoice.ReceivePCM(VC, c_dgp)
+
+
+					dgphandler := <-c_dgp
+					c_i16 := make(chan []int16)
+					c_i16 <- dgphandler.PCM
+
+					VC.Speaking(true)
+					dgvoice.SendPCM(VC, c_i16)
+					VC.Speaking(false)
+					/**/
+
+				stop := make(chan bool)
+				dgvoice.PlayAudioFile(VC, "sound.wav", stop)
+
+				/////////
+				///////// opus / dgvoice
+				/////////
+			}
+		}
 
 		//!playing
 		if strings.HasPrefix(m.Content, "!playing") {
@@ -1353,20 +1638,6 @@ func store(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		if m.Content == "!buy" {
 			s.ChannelMessageSend(m.ChannelID, "!buy color [HEX color] - 1,000,000 slices, changes the color of the color role")
 		}
-		/*
-			//!buy colorrole
-			if m.Content == "!buy colorrole" || m.Content == "!buy colourrole" {
-				slices_s := currency_get(m.Author.ID)
-				slices_b, _ := strconv.Atoi(slices_s)
-				if slices_b >= 100000000 {
-					currency_adjust(m.ChannelID, -100000000, m.Author.ID)
-					s.GuildMemberRoleAdd("409907314045353984", m.Author.ID, color_r)
-					s.ChannelMessageSend(m.ChannelID, "You have opted into the color role!")
-				} else {
-					s.ChannelMessageSend(m.ChannelID, "OOF, You only have "+slices_s+" slices!")
-				}
-			}
-		*/
 		//!buy color [color]
 		if strings.HasPrefix(m.Content, "!buy color ") || strings.HasPrefix(m.Content, "!buy colour ") {
 			var color_s string
@@ -1401,18 +1672,6 @@ func store(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 			return true
 		}
 	}
-	/*
-		member, err := s.State.Member("409907314045353984", AUTHORID)
-		if err != nil {
-			fmt.Println(err.Error() + " Error 4")
-		}
-		for _, RoleID := range member.Roles {
-			if RoleID == support_r || RoleID == staff_r || RoleID == admin_r || RoleID == moderator_r {
-				return true
-			}
-		}
-		return false
-	*/
 	return true
 }
 
@@ -1486,10 +1745,10 @@ func activity_tracker(m *discordgo.MessageCreate) {
 		level_int, _ := strconv.Atoi(string(xp_byte))
 
 		if (strings.Count(" ", m.Content) + 1) < 10 {
-			level_int += strings.Count(m.Content, " ") + 1
+			level_int += strings.Count(m.Content, " ") + (1 * xp_multiplier)
 
 		} else {
-			level_int += 10
+			level_int += (10 * xp_multiplier)
 		}
 
 		xp_string := strconv.Itoa(level_int)
@@ -1529,6 +1788,23 @@ func activity_tracker(m *discordgo.MessageCreate) {
 	defer db.Close()
 }
 
+func xp_till(ID string) (xp string, till string) {
+
+	xp = xp_get(ID)
+
+	xp_i, _ := strconv.Atoi(xp)
+	if xp_i < 500 {
+		xp = strconv.Itoa(500 - xp_i)
+		till = "XP till Verified"
+	} else if xp_i < 40500 {
+		xp = strconv.Itoa(40500 - xp_i)
+		till = "XP till Chill Squad"
+	} else {
+		return "", ""
+	}
+	return xp, till
+}
+
 func xp_get(ID string) (xp string) {
 
 	db, err := bolt.Open("my.db", 0600, nil)
@@ -1555,6 +1831,22 @@ func xp_get(ID string) (xp string) {
 	defer db.Close()
 
 	return xp
+}
+
+func iam_update(ID string, IAM string) {
+	db, err := bolt.Open("my.db", 0600, nil)
+	if err != nil {
+		fmt.Println(err.Error() + " IAM error")
+	}
+	db.Update(func(tx *bolt.Tx) error {
+		iam_bucket, err := tx.CreateBucketIfNotExists([]byte("iam"))
+		if err != nil {
+			return fmt.Errorf("create bucket: %s", err)
+		}
+		err = iam_bucket.Put([]byte(ID), []byte(IAM))
+		return nil
+	})
+	defer db.Close()
 }
 
 func xp_adjust(ChannelID string, adjustment_value int, ID string) {
@@ -1588,6 +1880,87 @@ func xp_adjust(ChannelID string, adjustment_value int, ID string) {
 	defer db.Close()
 }
 
+func cadian_get(s *discordgo.Session, ID string, roles bool) (cadian CADIAN) {
+
+	{ //currency check
+		db, err := bolt.Open("my.db", 0600, nil)
+		if err != nil {
+			fmt.Println(err.Error() + " currency error")
+		}
+		// get slices
+		db.Update(func(tx *bolt.Tx) error {
+			b, err := tx.CreateBucketIfNotExists([]byte("currency"))
+			if err != nil {
+				return fmt.Errorf("create bucket: %s", err)
+			}
+			get_byte := b.Get([]byte(ID))
+			cadian.slicesi, _ = strconv.Atoi(string(get_byte))
+			cadian.slicess = strconv.Itoa(cadian.slicesi)
+			return nil
+		})
+		// get xp
+		db.Update(func(tx *bolt.Tx) error {
+			b, err := tx.CreateBucketIfNotExists([]byte("xp"))
+			if err != nil {
+				return fmt.Errorf("create bucket: %s", err)
+			}
+			get_byte := b.Get([]byte(ID))
+			cadian.xpi, _ = strconv.Atoi(string(get_byte))
+			cadian.xps = strconv.Itoa(cadian.xpi)
+			return nil
+		})
+		db.Update(func(tx *bolt.Tx) error {
+			b, err := tx.CreateBucketIfNotExists([]byte("iam"))
+			if err != nil {
+				return fmt.Errorf("create bucket: %s", err)
+			}
+			cadian.IAM = string(b.Get([]byte(ID)))
+			return nil
+		})
+		defer db.Close()
+		if cadian.IAM == "" {
+			cadian.IAM = "Hey! Hey Listen!"
+
+		}
+	}
+
+	{ //level get
+		i := cadian.xpi
+		nextlevel := 0
+		for i >= nextlevel {
+			cadian.leveli++
+			nextlevel = (500 * (cadian.leveli * cadian.leveli))
+		}
+		cadian.levels = strconv.Itoa(cadian.leveli)
+		if cadian.leveli < 2 {
+			cadian.untillwhats = "XP till Verified"
+			cadian.xpuntills = strconv.Itoa((500 * (1)) - cadian.xpi)
+		} else if cadian.leveli < 10 {
+			cadian.untillwhats = "XP till Chill Squad"
+			cadian.xpuntills = strconv.Itoa((500 * (81)) - cadian.xpi)
+		} else {
+			cadian.untillwhats = "XP till next LVL"
+			cadian.xpuntills = strconv.Itoa(nextlevel - cadian.xpi)
+		}
+	}
+
+	//assign activity roles
+	if roles == true {
+		if cadian.leveli > 1 {
+			s.GuildMemberRoleAdd("409907314045353984", ID, "410520872676360193")
+		}
+		if cadian.leveli >= 10 {
+			s.GuildMemberRoleAdd("409907314045353984", ID, "446112365055049729")
+		}
+	}
+
+	{ //iam get
+
+	}
+
+	return cadian
+}
+
 func level_get(xp string) (Level string) {
 	var Level_i int
 	Level_i = 0
@@ -1595,6 +1968,7 @@ func level_get(xp string) (Level string) {
 	for level_i >= (500 * (Level_i * Level_i)) {
 		Level_i++
 	}
+
 	Level = strconv.Itoa(Level_i)
 
 	return Level
@@ -1693,50 +2067,75 @@ func pickacardbtw(seed int) (value int, name string) {
 
 func MemberJoinHandler(s *discordgo.Session, ma *discordgo.GuildMemberAdd) {
 
+	histring := "New Fag"
 	switch rand.Int() % 5 {
 	case 0:
-		s.ChannelMessageSend("409907314045353986", "Welcome to the Chill Asexual Discord <@"+ma.Member.User.ID+">!")
+		histring = ("Welcome to the Chill Asexual Discord " + ma.Member.User.Username + "!")
 	case 1:
-		s.ChannelMessageSend("409907314045353986", "Welcome to Chili's <@"+ma.Member.User.ID+">!")
+		histring = ("Welcome to Chili's " + ma.Member.User.Username + "!")
 	case 2:
-		s.ChannelMessageSend("409907314045353986", "Khajiit <@"+ma.Member.User.ID+"> has wares if you have SLICES...")
+		histring = ("Khajiit " + ma.Member.User.Username + " has wares if you have SLICES...")
 	case 3:
-		s.ChannelMessageSend("409907314045353986", "Bathroom is the 4th door on the left <@"+ma.Member.User.ID+">.")
+		histring = ("Bathroom is the 4th door on the left " + ma.Member.User.Username + ".")
 	case 4:
-		s.ChannelMessageSend("409907314045353986", "<@"+ma.Member.User.ID+"> is here, Please clap.")
+		histring = (ma.Member.User.Username + " is here, Please clap.")
 	}
+
+	embed := &discordgo.MessageEmbed{
+		Color:       0x00ff00,
+		Title:       histring,
+		Description: ma.Member.User.ID,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: ma.Member.User.AvatarURL(""),
+		},
+		//		Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+	}
+	s.ChannelMessageSendEmbed("409907314045353986", embed)
+
 }
 
 func MemberLeaveHandler(s *discordgo.Session, ma *discordgo.GuildMemberRemove) {
 
-	switch rand.Int() % 10 {
+	byestring := "Bye Fag"
+	switch rand.Int() % 11 {
 	case 0:
-		s.ChannelMessageSend("409907314045353986", "I'm sorry <@"+ma.Member.User.ID+">, You are not the biggest loser.")
+		byestring = ("I'm sorry " + ma.Member.User.Username + ", You are not the biggest loser.")
 	case 1:
-		s.ChannelMessageSend("409907314045353986", "I'm sorry <@"+ma.Member.User.ID+">, You have been voted off the island.")
+		byestring = ("I'm sorry " + ma.Member.User.Username + ", You have been voted off the island.")
 	case 2:
-		s.ChannelMessageSend("409907314045353986", "*psst* ||I heard <@"+ma.Member.User.ID+"> wasn't even chill anyway :/.||")
+		byestring = ("*psst* I heard " + ma.Member.User.Username + " wasn't even chill anyway :/.")
 	case 3:
-		s.ChannelMessageSend("409907314045353986", "Don't let the door hit you on the ass on your way out <@"+ma.Member.User.ID+">.")
+		byestring = ("Don't let the door hit you on the ass on your way out " + ma.Member.User.Username + ".")
 	case 4:
-		s.ChannelMessageSend("409907314045353986", "You are the weakest link. Goodbye <@"+ma.Member.User.ID+">.")
+		byestring = ("You are the weakest link. Goodbye " + ma.Member.User.Username + ".")
 	case 5:
-		s.ChannelMessageSend("409907314045353986", "We didn't like you anyway <@"+ma.Member.User.ID+">. 🖕🖕🖕")
+		byestring = ("We didn't like you anyway <@" + ma.Member.User.Username + ">. 🖕🖕🖕")
 	case 6:
-		s.ChannelMessageSend("409907314045353986", "<@"+ma.Member.User.ID+">, didn't even curtesy flush.")
+		byestring = (ma.Member.User.Username + ", didn't even curtesy flush.")
 	case 7:
-		s.ChannelMessageSend("409907314045353986", "<@"+ma.Member.User.ID+">'s CIS HET Otherkin Otaku Senpai is in another castle!")
+		byestring = (ma.Member.User.Username + "'s CIS HET Otherkin Otaku Senpai is in another castle!")
 	case 8:
-		s.ChannelMessageSend("409907314045353986", "Let me guess <@"+ma.Member.User.ID+">... someone stole your cake.")
+		byestring = ("Let me guess " + ma.Member.User.Username + "... someone stole your cake.")
 	case 9:
-		s.ChannelMessageSend("409907314045353986", "Your cold never bothered us anyway <@"+ma.Member.User.ID+">...")
+		byestring = ("Your cold never bothered us anyway " + ma.Member.User.Username + "...")
+	case 10:
+		byestring = "Piss off " + ma.Member.User.Username + "!"
 	}
+
+	embed := &discordgo.MessageEmbed{
+		Color:       0xff0000,
+		Title:       byestring,
+		Description: ma.Member.User.ID,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: ma.Member.User.AvatarURL(""),
+		},
+	}
+	s.ChannelMessageSendEmbed("409907314045353986", embed)
+
 }
 
 // ideas
 // daily pot
 // bingo
-// hard code Kazka
 // update help
 // play VC
-// playing... command
