@@ -27,7 +27,7 @@ import (
 
 const missingClientSecretsMessage = `Please configure OAuth 2.0`
 
-const xp_multiplier = 2.0
+const xp_multiplier = 1.0
 
 // Append this string with error messages
 var error_string string
@@ -650,6 +650,11 @@ func keywords(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		}
 	}
 
+	if m.GuildID == "" {
+		DMCHANNEL, _ := s.UserChannelCreate(m.Author.ID)
+		s.ChannelMessageSend(DMCHANNEL.ID, "Hello "+m.Author.Username+".")
+	}
+
 	return false
 }
 
@@ -803,8 +808,12 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		}
 
 		if strings.HasPrefix(m.Content, "!iam") {
-			iam_update(m.Author.ID, strings.TrimPrefix(m.Content, "!iam"))
-			s.ChannelMessageSend(m.ChannelID, "You are now \""+strings.TrimPrefix(m.Content, "!iam ")+"\"")
+			if len(m.Content)-5 > 140 {
+				s.ChannelMessageSend(m.ChannelID, "Yea, ok that's too long.")
+			} else {
+				iam_update(m.Author.ID, strings.TrimPrefix(m.Content, "!iam"))
+				s.ChannelMessageSend(m.ChannelID, "You are now \""+strings.TrimPrefix(m.Content, "!iam ")+"\"")
+			}
 		}
 
 		if strings.HasPrefix(m.Content, "!check") {
@@ -1012,7 +1021,7 @@ Staff Commands:
 			s.ChannelMessageSend(m.ChannelID, "```Cupio (prefix)``````A person without attraction that has a desire for such a relationship.```")
 		}
 
-		if strings.Contains(dtolower, "akio") || strings.Contains(dtolower, "akio") || strings.Contains(dtolower, "akoi") {
+		if strings.Contains(dtolower, "akio") || strings.Contains(dtolower, "lith") || strings.Contains(dtolower, "akoi") {
 			s.ChannelMessageSend(m.ChannelID, "```Akio (AKA Lith & Akoi) (prefix)``````A person that loses attraction upon reciprocation.```")
 		}
 
@@ -1285,60 +1294,22 @@ Staff Commands:
 				Fields      []*MessageEmbedField   `json:"fields,omitempty"`
 			}*/
 
-		if m.Content == "!test" {
-
-			/*
-				type MessageEmbedAuthor struct {
-					URL          string `json:"url,omitempty"`
-					Name         string `json:"name,omitempty"`
-					IconURL      string `json:"icon_url,omitempty"`
-					ProxyIconURL string `json:"proxy_icon_url,omitempty"`
-				}*/
-			/*
-				var MEAS discordgo.MessageEmbedAuthor
-				MEAS.URL = "https://discord.gg/MEAS"
-				MEAS.Name = "MEAS NAME"
-				MEAS.ProxyIconURL = m.Author.Avatar //maybe this is working
-				MEAS.ProxyIconURL = m.Author.Avatar // who fkn knows
-
-				var MES discordgo.MessageEmbed
-				MES.URL = "https://discord.gg"
-				MES.Color = 0x00ff00
-				MES.Timestamp = "Timestamp"
-				MES.Type = "Type"
-				MES.Title = "Title"
-				MES.Description = "Description"
-
-				MES.Author = &MEAS
-			*/
-			embed := &discordgo.MessageEmbed{
-				Author:      &discordgo.MessageEmbedAuthor{},
-				Color:       0x8a72da, // purple
-				Description: "This is a discordgo embed",
-				Fields: []*discordgo.MessageEmbedField{
-					&discordgo.MessageEmbedField{
-						Name:   "I am a field",
-						Value:  "I am a value",
-						Inline: true,
-					},
-					&discordgo.MessageEmbedField{
-						Name:   "I am a second field",
-						Value:  "I am a value",
-						Inline: true,
-					},
-				},
-				Image: &discordgo.MessageEmbedImage{
-					URL: "https://cdn.discordapp.com/attachments/465639104982417419/566055220765917194/unknown.png",
-				},
-				Thumbnail: &discordgo.MessageEmbedThumbnail{
-					URL: "https://cdn.discordapp.com/attachments/465639104982417419/566055220765917194/unknown.png",
-				},
-				Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
-				Title:     "I am an Embed",
+		if strings.HasPrefix(m.Content, "!idban") {
+			err := s.GuildBanCreate(CAD_s, strings.TrimPrefix(m.Content, "!idban "), 0)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "!idban error: "+err.Error())
+			} else {
+				s.ChannelMessageSend(m.ChannelID, "I THINK I BANNED HIM DADDY KAZKA")
 			}
 
-			s.ChannelMessageSendEmbed(m.ChannelID, embed)
+			//			s.ChannelMessageSend(m.ChannelID, )
 
+			//			s.GuildBanCreateWithReason(CAD_s, strings.TrimPrefix(m.Content, "!idban "), "IDBAN", 0)
+		}
+
+		if m.Content == "!test" {
+			DMCHANNEL, _ := s.UserChannelCreate(m.Author.ID)
+			s.ChannelMessageSend(DMCHANNEL.ID, "Hello Dave.")
 		}
 
 		if strings.Contains(m.Content, "!join") {
@@ -1700,6 +1671,9 @@ func moderation_log(s *discordgo.Session, who string, what int, where string, to
 }
 
 func hard_admin(s *discordgo.Session, AUTHORID string) bool {
+	if AUTHORID == kazka_u {
+		return true
+	}
 	member, err := s.State.Member("409907314045353984", AUTHORID)
 	if err != nil {
 		fmt.Println(err.Error() + " Error 4")
@@ -1714,6 +1688,9 @@ func hard_admin(s *discordgo.Session, AUTHORID string) bool {
 }
 
 func hard_support(s *discordgo.Session, AUTHORID string) bool {
+	if AUTHORID == kazka_u {
+		return true
+	}
 	member, err := s.State.Member("409907314045353984", AUTHORID)
 	if err != nil {
 		fmt.Println(err.Error() + " Error 4")
@@ -2130,7 +2107,7 @@ func MemberLeaveHandler(s *discordgo.Session, ma *discordgo.GuildMemberRemove) {
 			URL: ma.Member.User.AvatarURL(""),
 		},
 	}
-	s.ChannelMessageSendEmbed("409907314045353986", embed)
+	s.ChannelMessageSendEmbed("436669514931765279", embed)
 
 }
 
