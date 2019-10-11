@@ -53,7 +53,7 @@ type blackjack_game struct {
 	playerhand int
 }
 
-type CADIAN struct {
+type MEMBER struct {
 	xpi int
 	xps string
 
@@ -71,6 +71,22 @@ type CADIAN struct {
 
 var blackjack blackjack_game
 
+const Pride_Factory_s string = "575078840804835358"
+const Roles_r string = "632070676576075776"
+
+const Blue_r string = "575085615305981997"
+const Red_r string = "575085647019376683"
+const Yellow_r string = "575085699791978497"
+const Green_r string = "575085736920088598"
+const Purple_r string = "575085818092191756"
+const Orange_r string = "575085772114493491"
+const Gray_r string = "632079267395534848"
+const Pink_r string = "601632152827985941"
+const Pinker_r string = "632076195218849792"
+
+const Friends_r string = "632082165911257089"
+const VC_r string = "632082190964097044"
+
 const CAD_s string = "409907314045353984"
 const modlog_c string = "410522993102422026"
 const announcements_c string = "435758751782535169"
@@ -78,7 +94,6 @@ const eventsnbots_c string = "436669514931765279"
 const casino_c string = "451255642087358464"
 const botroom_c string = "442493156584587265"
 const kazka_u string = "340665281791918092"
-const pram_u string = "398643515363688448"
 const staff_r string = "410522026868998146"
 const admin_r string = "410521789782032384"
 const moderator_r string = "410521251304570882"
@@ -348,185 +363,69 @@ func VoiceStateUpdateHandler(vs *discordgo.VoiceStateUpdate) {
 }*/
 
 func subreactionHandler(s *discordgo.Session, r *discordgo.MessageReactionRemove) {
-	if r.ChannelID == "556647040633798677" {
+	if r.ChannelID == Roles_r {
 		switch r.Emoji.Name {
-		case "🥃":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "424210978746400768")
-		case "🍑":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "504815202320121857")
-		case "📝":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "458282517062221859")
-		case "🎰":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "451256712658288643")
-		case "🎮":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "455495472874782720")
-		case "🗾":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "455495577581387794")
-		case "🦊":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "465350963251904512")
-		case "🎨":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "465350853847416843")
-		case "🚗":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "467166719908249602")
-		case "💖":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "560497354822647808")
+		case "💙":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Blue_r)
+		case "❤":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Red_r)
+		case "💛":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Yellow_r)
 		case "💚":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "560497403845804032")
-		case "🌈":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "560056946439225354")
-
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Green_r)
+		case "💜":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Purple_r)
+		case "📙":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Orange_r)
+		case "🌝":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Gray_r)
+		case "🌸":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Pink_r)
+		case "🌷":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Pinker_r)
 		case "🎙":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "516841560953061378")
-		case "🖱":
-			s.GuildMemberRoleRemove("409907314045353984", r.UserID, "513557311592202250")
-		}
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, VC_r)
+		case "👋":
+			s.GuildMemberRoleRemove(Pride_Factory_s, r.UserID, Friends_r)
 
-	}
-
-	if r.MessageID == "560684099006758912" {
-		switch r.Emoji.Name {
-		case "💩":
-			{
-				s.GuildMemberRoleRemove(CAD_s, r.UserID, color_r)
-			}
 		}
 	}
 
 }
 
 func addreactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
-	/*
-		type MessageReaction struct {
-			UserID    string `json:"user_id"`
-			MessageID string `json:"message_id"`
-			Emoji     Emoji  `json:"emoji"`
-			ChannelID string `json:"channel_id"`
-			GuildID   string `json:"guild_id,omitempty"`
-		}
 
-		type Emoji struct {
-			ID            string   `json:"id"`
-			Name          string   `json:"name"`
-			Roles         []string `json:"roles"`
-			Managed       bool     `json:"managed"`
-			RequireColons bool     `json:"require_colons"`
-			Animated      bool     `json:"animated"`
-		}
-	*/
+	/*if r.ChannelID == Roles_r {
+		s.MessageReactionAdd(Roles_r, r.MessageID, r.Emoji.Name)
+	}*/
 
-	if r.MessageID == "557223964603187203" || r.MessageID == "560525971661258773" || r.MessageID == "560526178432319488" {
-		s.MessageReactionAdd(r.ChannelID, r.MessageID, r.Emoji.Name)
-		if r.UserID != BotID {
-			switch r.Emoji.Name {
-			case "🥃":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "424210978746400768")
-			case "🍑":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "504815202320121857")
-			case "📝":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "458282517062221859")
-			case "🎰":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "451256712658288643")
-			case "🎮":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "455495472874782720")
-			case "🗾":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "455495577581387794")
-			case "🦊":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "465350963251904512")
-			case "🎨":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "465350853847416843")
-			case "🚗":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "467166719908249602")
-			case "💖":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "560497354822647808")
-			case "💚":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "560497403845804032")
-			case "🌈":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "560056946439225354")
-
-			case "🎙":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "516841560953061378")
-			case "🖱":
-				s.GuildMemberRoleAdd("409907314045353984", r.UserID, "513557311592202250")
-			}
-
-		}
-
-	}
-
-	if r.MessageID == "560684099006758912" {
+	if r.ChannelID == Roles_r {
 		switch r.Emoji.Name {
-		case "💩":
-			{
-				member, err := s.State.Member(CAD_s, r.UserID)
-				if err != nil {
-					fmt.Println(err.Error() + " buy color error")
-					return
-				}
-				for _, RoleID := range member.Roles {
-					if RoleID == color_r {
-						return
-					}
-				}
+		case "💙":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Blue_r)
+		case "❤":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Red_r)
+		case "💛":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Yellow_r)
+		case "💚":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Green_r)
+		case "💜":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Purple_r)
+		case "📙":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Orange_r)
+		case "🌝":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Gray_r)
+		case "🌸":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Pink_r)
+		case "🌷":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Pinker_r)
+		case "🎙":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, VC_r)
+		case "👋":
+			s.GuildMemberRoleAdd(Pride_Factory_s, r.UserID, Friends_r)
 
-				slices_s := currency_get(r.UserID)
-				slices_b, _ := strconv.Atoi(slices_s)
-				if slices_b >= 100000000 {
-					currency_adjust("", -100000000, r.UserID)
-					s.GuildMemberRoleAdd(CAD_s, r.UserID, color_r)
-				} else {
-					//EDIT A LOG MESSAGE
-					//s.MessageReactionRemove(channelID, messageID, emojiID, userID string) error
-					s.MessageReactionRemove("556647040633798677", "560684099006758912", r.Emoji.Name, r.UserID)
-				}
-			}
-
-		}
-
-	}
-	/*
-		if r.MessageID == "560690684898836494" {
-			s.MessageReactionAdd("556647040633798677", "560690684898836494", r.Emoji.Name)
-		}
-	*/
-
-	if r.MessageID == "560690684898836494" {
-		s.MessageReactionRemove("556647040633798677", "560690684898836494", r.Emoji.Name, r.UserID)
-		member, err := s.State.Member(CAD_s, r.UserID)
-		if err != nil {
-			fmt.Println(err.Error() + " buy color error")
-			return
-		}
-		for _, RoleID := range member.Roles {
-			if RoleID == color_r {
-				slices_s := currency_get(r.UserID)
-				slices_b, _ := strconv.Atoi(slices_s)
-				if slices_b >= 1000000 {
-					currency_adjust(r.ChannelID, -1000000, r.UserID)
-					switch r.Emoji.Name {
-					case "💙":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 6139372, false, 0, false)
-					case "❤":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 12458289, false, 0, false)
-					case "💜":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 11177686, false, 0, false)
-					case "💚":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 7909721, false, 0, false)
-					case "💛":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 16632664, false, 0, false)
-					case "🖤":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 1, false, 0, false)
-					case "🔶":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 16755763, false, 0, false)
-					case "⚪":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 15132648, false, 0, false)
-					case "💩":
-						s.GuildRoleEdit(CAD_s, color_r, "Color", 12544338, false, 0, false)
-					}
-				}
-			}
 		}
 	}
-
 }
 
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -818,33 +717,33 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 
 		if strings.HasPrefix(m.Content, "!check") {
 			if m.Content == "!check" {
-				cadian := cadian_get(s, m.Author.ID, true)
+				member := member_get(s, m.Author.ID, true)
 				embed := &discordgo.MessageEmbed{
 					Author: &discordgo.MessageEmbedAuthor{
 						IconURL: m.Author.AvatarURL(""),
 					},
 					Color:       0x8a72da, // purple
 					Title:       "Here are your stats " + m.Author.Username + "!",
-					Description: cadian.IAM,
+					Description: member.IAM,
 					Fields: []*discordgo.MessageEmbedField{
 						&discordgo.MessageEmbedField{
 							Name:   "Total XP",
-							Value:  cadian.xps,
+							Value:  member.xps,
 							Inline: true,
 						},
 						&discordgo.MessageEmbedField{
 							Name:   "Current Level",
-							Value:  cadian.levels,
+							Value:  member.levels,
 							Inline: true,
 						},
 						&discordgo.MessageEmbedField{
-							Name:   cadian.untillwhats,
-							Value:  cadian.xpuntills,
+							Name:   member.untillwhats,
+							Value:  member.xpuntills,
 							Inline: true,
 						},
 						&discordgo.MessageEmbedField{
 							Name:   "Total Slices",
-							Value:  cadian.slicess,
+							Value:  member.slicess,
 							Inline: true,
 						},
 					},
@@ -859,33 +758,33 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 				howmany := len(mentions)
 				if howmany > 0 {
 					for i := 0; i < howmany; i++ {
-						cadian := cadian_get(s, mentions[i].ID, mentions[i].ID == m.Author.ID)
+						member := member_get(s, mentions[i].ID, mentions[i].ID == m.Author.ID)
 						embed := &discordgo.MessageEmbed{
 							Author: &discordgo.MessageEmbedAuthor{
 								IconURL: mentions[i].AvatarURL(""),
 							},
 							Color:       0x8ad0da, // purple
 							Title:       "...Checking " + mentions[i].Username + "'s Stats!",
-							Description: cadian.IAM,
+							Description: member.IAM,
 							Fields: []*discordgo.MessageEmbedField{
 								&discordgo.MessageEmbedField{
 									Name:   "Total XP",
-									Value:  cadian.xps,
+									Value:  member.xps,
 									Inline: true,
 								},
 								&discordgo.MessageEmbedField{
 									Name:   "Current Level",
-									Value:  cadian.levels,
+									Value:  member.levels,
 									Inline: true,
 								},
 								&discordgo.MessageEmbedField{
-									Name:   cadian.untillwhats,
-									Value:  cadian.xpuntills,
+									Name:   member.untillwhats,
+									Value:  member.xpuntills,
 									Inline: true,
 								},
 								&discordgo.MessageEmbedField{
 									Name:   "Total Slices",
-									Value:  cadian.slicess,
+									Value:  member.slicess,
 									Inline: true,
 								},
 							},
@@ -1857,7 +1756,7 @@ func xp_adjust(ChannelID string, adjustment_value int, ID string) {
 	defer db.Close()
 }
 
-func cadian_get(s *discordgo.Session, ID string, roles bool) (cadian CADIAN) {
+func member_get(s *discordgo.Session, ID string, roles bool) (member MEMBER) {
 
 	{ //currency check
 		db, err := bolt.Open("my.db", 0600, nil)
@@ -1871,8 +1770,8 @@ func cadian_get(s *discordgo.Session, ID string, roles bool) (cadian CADIAN) {
 				return fmt.Errorf("create bucket: %s", err)
 			}
 			get_byte := b.Get([]byte(ID))
-			cadian.slicesi, _ = strconv.Atoi(string(get_byte))
-			cadian.slicess = strconv.Itoa(cadian.slicesi)
+			member.slicesi, _ = strconv.Atoi(string(get_byte))
+			member.slicess = strconv.Itoa(member.slicesi)
 			return nil
 		})
 		// get xp
@@ -1882,8 +1781,8 @@ func cadian_get(s *discordgo.Session, ID string, roles bool) (cadian CADIAN) {
 				return fmt.Errorf("create bucket: %s", err)
 			}
 			get_byte := b.Get([]byte(ID))
-			cadian.xpi, _ = strconv.Atoi(string(get_byte))
-			cadian.xps = strconv.Itoa(cadian.xpi)
+			member.xpi, _ = strconv.Atoi(string(get_byte))
+			member.xps = strconv.Itoa(member.xpi)
 			return nil
 		})
 		db.Update(func(tx *bolt.Tx) error {
@@ -1891,42 +1790,42 @@ func cadian_get(s *discordgo.Session, ID string, roles bool) (cadian CADIAN) {
 			if err != nil {
 				return fmt.Errorf("create bucket: %s", err)
 			}
-			cadian.IAM = string(b.Get([]byte(ID)))
+			member.IAM = string(b.Get([]byte(ID)))
 			return nil
 		})
 		defer db.Close()
-		if cadian.IAM == "" {
-			cadian.IAM = "Hey! Hey Listen!"
+		if member.IAM == "" {
+			member.IAM = "Hey! Hey Listen!"
 
 		}
 	}
 
 	{ //level get
-		i := cadian.xpi
+		i := member.xpi
 		nextlevel := 0
 		for i >= nextlevel {
-			cadian.leveli++
-			nextlevel = (500 * (cadian.leveli * cadian.leveli))
+			member.leveli++
+			nextlevel = (500 * (member.leveli * member.leveli))
 		}
-		cadian.levels = strconv.Itoa(cadian.leveli)
-		if cadian.leveli < 2 {
-			cadian.untillwhats = "XP till Verified"
-			cadian.xpuntills = strconv.Itoa((500 * (1)) - cadian.xpi)
-		} else if cadian.leveli < 10 {
-			cadian.untillwhats = "XP till Chill Squad"
-			cadian.xpuntills = strconv.Itoa((500 * (81)) - cadian.xpi)
+		member.levels = strconv.Itoa(member.leveli)
+		if member.leveli < 2 {
+			member.untillwhats = "XP till Verified"
+			member.xpuntills = strconv.Itoa((500 * (1)) - member.xpi)
+		} else if member.leveli < 10 {
+			member.untillwhats = "XP till Chill Squad"
+			member.xpuntills = strconv.Itoa((500 * (81)) - member.xpi)
 		} else {
-			cadian.untillwhats = "XP till next LVL"
-			cadian.xpuntills = strconv.Itoa(nextlevel - cadian.xpi)
+			member.untillwhats = "XP till next LVL"
+			member.xpuntills = strconv.Itoa(nextlevel - member.xpi)
 		}
 	}
 
 	//assign activity roles
 	if roles == true {
-		if cadian.leveli > 1 {
+		if member.leveli > 1 {
 			s.GuildMemberRoleAdd("409907314045353984", ID, "410520872676360193")
 		}
-		if cadian.leveli >= 10 {
+		if member.leveli >= 10 {
 			s.GuildMemberRoleAdd("409907314045353984", ID, "446112365055049729")
 		}
 	}
@@ -1935,7 +1834,7 @@ func cadian_get(s *discordgo.Session, ID string, roles bool) (cadian CADIAN) {
 
 	}
 
-	return cadian
+	return member
 }
 
 func level_get(xp string) (Level string) {
