@@ -87,19 +87,23 @@ const Pinker_r string = "632076195218849792"
 const Friends_r string = "632082165911257089"
 const VC_r string = "632082190964097044"
 
+const BotSpam_c string = "632734731863064597"
+
+const kazka_u string = "340665281791918092"
+
 const CAD_s string = "409907314045353984"
+
+/*
 const modlog_c string = "410522993102422026"
 const announcements_c string = "435758751782535169"
-const eventsnbots_c string = "436669514931765279"
 const casino_c string = "451255642087358464"
 const botroom_c string = "442493156584587265"
-const kazka_u string = "340665281791918092"
 const staff_r string = "410522026868998146"
 const admin_r string = "410521789782032384"
 const moderator_r string = "410521251304570882"
 const support_r string = "458036299732090892"
 const color_r string = "534412981694627864"
-
+*/
 var CBPresence *discordgo.Presence
 
 ///////////////////////
@@ -442,12 +446,12 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if commands(s, m) == true {
 			// terminate
 		}
-		if m.ChannelID == "451255642087358464" || test_room(m.ChannelID) || hard_admin(s, m.Author.ID) {
+		if m.ChannelID == BotSpam_c || test_room(m.ChannelID) || m.Author.ID == kazka_u {
 			if casino(s, m) == true {
 				// terminate
 			}
 		}
-		if m.ChannelID == "436669514931765279" || test_room(m.ChannelID) || hard_admin(s, m.Author.ID) {
+		if m.ChannelID == "436669514931765279" || test_room(m.ChannelID) || m.Author.ID == kazka_u {
 			if store(s, m) == true {
 				// terminate
 			}
@@ -541,13 +545,13 @@ func keywords(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		s.MessageReactionAdd(m.ChannelID, m.ID, "a:Clap:434360842620895253")
 	}
 
-	if strings.Contains(m.Content, "https://discord.gg/") || strings.Contains(m.Content, "discord.gg/") {
+	/*	if strings.Contains(m.Content, "https://discord.gg/") || strings.Contains(m.Content, "discord.gg/") {
 		if hard_admin(s, m.Author.ID) == false {
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 			s.ChannelMessageSend(m.ChannelID, "OOF sorry, you cant link to discord channels. You can @ a staff member and ask them to link to it if its ok!")
 			s.ChannelMessageSend(modlog_c, "Deleted message from <@"+m.Author.ID+"> in channel <#"+m.ChannelID+"> that contained a discord link.: ``"+m.Content+"``")
 		}
-	}
+	}*/
 
 	if m.GuildID == "" {
 		DMCHANNEL, _ := s.UserChannelCreate(m.Author.ID)
@@ -581,121 +585,7 @@ func echo(v *discordgo.VoiceConnection) {
 
 func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 	// general commands
-	if m.ChannelID == eventsnbots_c || m.ChannelID == casino_c || hard_admin(s, m.Author.ID) || hard_support(s, m.Author.ID) || m.Author.ID == kazka_u || m.ChannelID == botroom_c {
-
-		// info
-		if m.Content == "!info" {
-			switch m.ChannelID {
-			case "435758751782535169":
-				s.ChannelMessageSend(m.ChannelID, "welcome to spam room, fucking kazka's spam room holy shit dude calm down no one even reads this shit :rolling eyes:")
-				//RNI
-
-			case "409907314045353986":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#409907314045353986>, this is the entry point for newbs, and also the primary channel for general convos. <:Chill:425981027735961600>")
-				//general
-
-			case "454125920664682516":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#454125920664682516>, this is like an overflow channel, for general conversations. <:Chill:425981027735961600>")
-				//generalbutdifferent
-
-			case "410522736952082433":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#410522736952082433>, channel for shitposting, memes, or things that otherwise don't have a better place.")
-				//offtopic
-
-			case "436669514931765279":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#436669514931765279>, THIS IS MY CHANNEL FOOL!!! MUHAHAHAHAH!!")
-				//bot room
-
-			case "455992881237327873":
-				s.ChannelMessageSend(m.ChannelID, "Zoinks!, where are we Scoob?")
-				//illegal seagul
-
-			case "547188977053204521":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#547188977053204521>,\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWelcome to <#547188977053204521>,\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWelcome to <#547188977053204521>,\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWelcome to <#547188977053204521>,\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-				//spam
-
-			case "543741127023525889":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#543741127023525889>, personal aspec identity questions here, y'kno beginer stuff <:AmIAce:518559063575887953>")
-				//am i ace?
-
-			case "442795706416365578":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#442795706416365578>, for more general A/Sexual or A/Romantic Spectrum conversations, and topics.")
-				//aspec
-
-			case "530818485530394629":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#530818485530394629>, personal developement topics, and questions, school, work, that kinda thing.")
-				//life101
-
-			case "421047453530324992":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#421047453530324992>, dissagreements of any caliber, if it gets heated might need to @support.")
-				//debate
-
-			case "455586955367940106":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#455586955367940106>, something on your mind, something you need to get off your chest? Here you go. (also pro tip, not everyone is looking for advice)")
-				//ventroom
-
-			case "556647040633798677":
-				s.ChannelMessageSend(m.ChannelID, "What the fuck, you like... stupid or something?")
-				//optin
-
-			case "513563819012784143":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#513563819012784143>, other non-aspec identities and/or how they interact. Check the pinned messages for more info. (ie gender, autism)\nMANAGED BY CUTEGOATBOY AND GNER0")
-				//intersections
-
-			case "560523418559184896":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#560523418559184896>, Talking about GROSS ROMANCE THINGS.")
-				//romanace
-
-			case "560495867170390036":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#560495867170390036>, Talking about aro things.")
-				//aromanace
-
-			case "438921045345435648":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#438921045345435648>, for conversation oriented, shitposting potentially explicit things is allowed so long as you aren't like interupting a convo.\nMANAGED BY GNER0")
-				//explicit1
-
-			case "504815410655395840":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#504815410655395840>, more for shit posting NSFW stuff, but you can use it as a backup for <#438921045345435648> if it's in use, Just remeber to check the DISCORD TOS (linked in #rulesandinfo) or hit up the room manager if you're not sure if something would be allowed here or not.\nMANAGED BY GNER0")
-				//explicit2
-
-			case "458282694661505044":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#458282694661505044>, finding, sharing, and taking silly tests! (Tests are pinned). If you have a new test, feel free to hit up one of the managers.\nMANAGED BY CUTEGOATBOY AND ZEBB9")
-				//test room
-
-			case "451255642087358464":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#451255642087358464>, you can use !help blackjack or !help roulette to understand the game.")
-				//casino
-
-			case "455495913243410434":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#455495913243410434>, I'd recomend checking the pinned messages if you want to find others / share your gaming contact info!\nMANAGED BY  UNKNOWNSOLDIER86")
-				//gameroom
-
-			case "455495861036646421":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#455495861036646421>, general weeb asia culture that kinda thing.\nMANAGED BY GOGO")
-				//japan
-
-			case "465639181037731840":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#465639181037731840>, SFW channel for talking about and sharing furry stuff (please link). For sharing stuff you've made, consider posting it in <#465639104982417419>!\nMANAGED BY KAZKA")
-				//furry
-
-			case "465639104982417419":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#465639104982417419>, for talking about things you are making / working on / made and sharing them :)\nMANAGED BY STARFIERY")
-				//maker
-
-			case "467174723558834177":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#467174723558834177>, for all your mechanical interests!\nMANAGED BY 🐐 AND ILIKECARSMORETHANWOMEN")
-				//garage
-
-			case "457586853155962880":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#457586853155962880>, Channel for VC ")
-				//no context
-
-			case "457820278764863489":
-				s.ChannelMessageSend(m.ChannelID, "Welcome to <#457820278764863489>, share music er smthn idc this is the last room im doing :shrug:")
-				//music
-
-			}
-		}
+	if m.ChannelID == BotSpam_c || m.Author.ID == kazka_u {
 
 		//!who
 		if m.Content == "!who" {
@@ -806,7 +696,7 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 
 		//!help
 		if m.Content == "!help" {
-			s.ChannelMessageSend(m.ChannelID, `<#`+eventsnbots_c+`> Commands:
+			s.ChannelMessageSend(m.ChannelID, `<#`+BotSpam_c+`> Commands:
 !help - gives a list of commands
 !keywords - list of words that chillbot reacts to
 !who - who am I, you ask?
@@ -1026,7 +916,7 @@ Staff Commands:
 				} else {
 					s.ChannelMessageSend(m.ChannelID, "Please don't.")
 				}
-			} else if strings.HasSuffix(m.Content, "daddy") || strings.HasSuffix(m.Content, "Daddy") || m.ChannelID == botroom_c {
+			} else if strings.HasSuffix(m.Content, "daddy") || strings.HasSuffix(m.Content, "Daddy") {
 				s.ChannelMessageSend(m.ChannelID, "<a:gachiBASS:434488099163078667>")
 			} else {
 				s.ChannelMessageSend(m.ChannelID, "Please don't.")
@@ -1050,111 +940,110 @@ Staff Commands:
 	}
 
 	//support commands
-	if hard_support(s, m.Author.ID) || hard_admin(s, m.Author.ID) || m.Author.ID == kazka_u || m.ChannelID == botroom_c {
+	/*
+	   	if hard_support(s, m.Author.ID) || hard_admin(s, m.Author.ID) || m.Author.ID == kazka_u {
 
-		//!squirrel [reason]
-		if strings.HasPrefix(m.Content, "!squirrel ") {
-			if hard_admin(s, m.Author.ID) || hard_support(s, m.Author.ID) || m.Author.ID == "200254471845052416" {
-				var ii int
-				var squirel string
-				for ii < 20 {
-					ii++
-					squirel += "Hey what's that? --->\n\n\n\n"
-					if ii == 10 {
-						squirel += "🐿\n\n\n\n️"
-					}
+	   		//!squirrel [reason]
+	   		if strings.HasPrefix(m.Content, "!squirrel ") {
+	   			if hard_admin(s, m.Author.ID) || hard_support(s, m.Author.ID) || m.Author.ID == "200254471845052416" {
+	   				var ii int
+	   				var squirel string
+	   				for ii < 20 {
+	   					ii++
+	   					squirel += "Hey what's that? --->\n\n\n\n"
+	   					if ii == 10 {
+	   						squirel += "🐿\n\n\n\n️"
+	   					}
+	   				}
+	   				s.ChannelMessageSend(m.ChannelID, squirel)
+	   				moderation_log(s, m.Author.ID, 1, m.ChannelID, "", strings.TrimPrefix(m.Content, "!squirrel"))
+	   			} else {
+	   				s.ChannelMessageSend(m.ChannelID, "There aint nuthin there...")
+	   			}
+	   		}
+	   	}
+	   /*
+	   	//staff commands
+	   	/*if hard_admin(s, m.Author.ID) || m.Author.ID == kazka_u {
+
+	   	//!mute [reason]
+	   	if strings.HasPrefix(m.Content, "!mute") {
+	   		if hard_admin(s, m.Author.ID) {
+	   			mentions := m.Mentions
+	   			if len(mentions) == 1 {
+	   				s.GuildMemberRoleAdd(CAD_s, m.Mentions[0].ID, "454807029207269376")
+	   				moderation_log(s, m.Author.ID, 2, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!mute "))
+	   			}
+	   		} else {
+	   			s.ChannelMessageSend(m.ChannelID, "Excuse me, who do you think you are? I should mute you...")
+	   		}
+	   	}
+
+	   	//!kick [reason]
+	   	if strings.HasPrefix(m.Content, "!kick") {
+	   		if hard_admin(s, m.Author.ID) {
+	   			mentions := m.Mentions
+	   			if len(mentions) == 1 {
+	   				s.GuildMemberDeleteWithReason(CAD_s, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!kick"))
+	   				moderation_log(s, m.Author.ID, 4, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!kick "))
+	   			}
+	   		} else {
+	   			s.ChannelMessageSend(m.ChannelID, "Excuse me, who do you think you are? I should kick you...")
+	   		}
+	   	}
+
+	   	//!ban [reason]
+	   	if strings.HasPrefix(m.Content, "!ban") {
+	   		if hard_admin(s, m.Author.ID) {
+	   			mentions := m.Mentions
+	   			if len(mentions) == 1 {
+	   				s.GuildBanCreateWithReason(CAD_s, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "), 0)
+	   				moderation_log(s, m.Author.ID, 3, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "))
+	   			} else if len(mentions) == 0 {
+	   				s.GuildBanCreateWithReason(CAD_s, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "), 0)
+	   				moderation_log(s, m.Author.ID, 3, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "))
+	   			}
+	   		} else {
+	   			s.ChannelMessageSend(m.ChannelID, "Excuse me, who do you think you are? I should ban you...")
+	   		}
+	   	}
+	*/
+	//!xpa [@] [amount]
+	if strings.HasPrefix(m.Content, "!xpa") {
+		if m.Author.ID == kazka_u {
+			mentions := m.Mentions
+			if len(mentions) == 1 {
+				XPadjust_s := strings.TrimPrefix(m.Content, "!xpa <@"+mentions[0].ID+"> ")
+				if strings.HasPrefix(XPadjust_s, "!xpa") {
+					XPadjust_s = strings.TrimPrefix(m.Content, "!xpa <@!"+mentions[0].ID+"> ")
 				}
-				s.ChannelMessageSend(m.ChannelID, squirel)
-				moderation_log(s, m.Author.ID, 1, m.ChannelID, "", strings.TrimPrefix(m.Content, "!squirrel"))
-			} else {
-				s.ChannelMessageSend(m.ChannelID, "There aint nuthin there...")
+				XPadjust_i, _ := strconv.Atoi(XPadjust_s)
+				xp_adjust(m.ChannelID, XPadjust_i, mentions[0].ID)
+				s.ChannelMessageSend(m.ChannelID, "XP Adjusted")
 			}
 		}
 	}
 
-	//staff commands
-	if hard_admin(s, m.Author.ID) || m.Author.ID == kazka_u || m.ChannelID == botroom_c {
-
-		//!mute [reason]
-		if strings.HasPrefix(m.Content, "!mute") {
-			if hard_admin(s, m.Author.ID) {
-				mentions := m.Mentions
-				if len(mentions) == 1 {
-					s.GuildMemberRoleAdd(CAD_s, m.Mentions[0].ID, "454807029207269376")
-					moderation_log(s, m.Author.ID, 2, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!mute "))
+	//!slicesa [@] [amount]
+	if strings.HasPrefix(m.Content, "!slicesa") {
+		if m.Author.ID == kazka_u {
+			mentions := m.Mentions
+			if len(mentions) == 1 {
+				SLICESadjust_s := strings.TrimPrefix(m.Content, "!slicesa <@"+mentions[0].ID+"> ")
+				if strings.HasPrefix(SLICESadjust_s, "!slicesa") {
+					SLICESadjust_s = strings.TrimPrefix(m.Content, "!slicesa <@!"+mentions[0].ID+"> ")
 				}
+				SLICESadjust_i, _ := strconv.Atoi(SLICESadjust_s)
+				currency_adjust(m.ChannelID, SLICESadjust_i, mentions[0].ID)
+				s.ChannelMessageSend(m.ChannelID, "FREE SLICES! <:POGGERS:434360204147032074>")
 			} else {
-				s.ChannelMessageSend(m.ChannelID, "Excuse me, who do you think you are? I should mute you...")
+				s.ChannelMessageSend(m.ChannelID, "Uh... no, this my cake <:CapitalDColon:434488099255615488> B!")
 			}
 		}
-
-		//!kick [reason]
-		if strings.HasPrefix(m.Content, "!kick") {
-			if hard_admin(s, m.Author.ID) {
-				mentions := m.Mentions
-				if len(mentions) == 1 {
-					s.GuildMemberDeleteWithReason(CAD_s, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!kick"))
-					moderation_log(s, m.Author.ID, 4, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!kick "))
-				}
-			} else {
-				s.ChannelMessageSend(m.ChannelID, "Excuse me, who do you think you are? I should kick you...")
-			}
-		}
-
-		//!ban [reason]
-		if strings.HasPrefix(m.Content, "!ban") {
-			if hard_admin(s, m.Author.ID) {
-				mentions := m.Mentions
-				if len(mentions) == 1 {
-					s.GuildBanCreateWithReason(CAD_s, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "), 0)
-					moderation_log(s, m.Author.ID, 3, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "))
-				} else if len(mentions) == 0 {
-					s.GuildBanCreateWithReason(CAD_s, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "), 0)
-					moderation_log(s, m.Author.ID, 3, m.ChannelID, m.Mentions[0].ID, strings.TrimPrefix(m.Content, "!ban "))
-				}
-			} else {
-				s.ChannelMessageSend(m.ChannelID, "Excuse me, who do you think you are? I should ban you...")
-			}
-		}
-
-		//!xpa [@] [amount]
-		if strings.HasPrefix(m.Content, "!xpa") {
-			if hard_admin(s, m.Author.ID) {
-				mentions := m.Mentions
-				if len(mentions) == 1 {
-					XPadjust_s := strings.TrimPrefix(m.Content, "!xpa <@"+mentions[0].ID+"> ")
-					if strings.HasPrefix(XPadjust_s, "!xpa") {
-						XPadjust_s = strings.TrimPrefix(m.Content, "!xpa <@!"+mentions[0].ID+"> ")
-					}
-					XPadjust_i, _ := strconv.Atoi(XPadjust_s)
-					xp_adjust(m.ChannelID, XPadjust_i, mentions[0].ID)
-					s.ChannelMessageSend(m.ChannelID, "XP Adjusted")
-				}
-			}
-		}
-
-		//!slicesa [@] [amount]
-		if strings.HasPrefix(m.Content, "!slicesa") {
-			if hard_admin(s, m.Author.ID) {
-				mentions := m.Mentions
-				if len(mentions) == 1 {
-					SLICESadjust_s := strings.TrimPrefix(m.Content, "!slicesa <@"+mentions[0].ID+"> ")
-					if strings.HasPrefix(SLICESadjust_s, "!slicesa") {
-						SLICESadjust_s = strings.TrimPrefix(m.Content, "!slicesa <@!"+mentions[0].ID+"> ")
-					}
-					SLICESadjust_i, _ := strconv.Atoi(SLICESadjust_s)
-					currency_adjust(m.ChannelID, SLICESadjust_i, mentions[0].ID)
-					s.ChannelMessageSend(m.ChannelID, "FREE SLICES! <:POGGERS:434360204147032074>")
-				} else {
-					s.ChannelMessageSend(m.ChannelID, "Uh... no, this my cake <:CapitalDColon:434488099255615488> B!")
-				}
-			}
-		}
-
 	}
 
 	//kazka commands
-	if m.Author.ID == kazka_u || m.ChannelID == botroom_c {
+	if m.Author.ID == kazka_u {
 
 		if strings.HasPrefix(m.Content, "!kiss") {
 			if m.Content == "!kiss" {
@@ -1320,7 +1209,7 @@ Staff Commands:
 
 		//!terminate
 		if m.Content == "!terminate" {
-			if hard_admin(s, m.Author.ID) {
+			if m.Author.ID == kazka_u {
 				s.ChannelMessageSend(m.ChannelID, "A'ight, peace out yall.")
 				os.Exit(-1)
 			} else {
@@ -1469,7 +1358,7 @@ func casino(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		}
 	}
 
-	if BJ[0] == "!roulette" {
+	if BJ[0] == "!roulette" || BJ[0] == "!r" {
 		if len(BJ) > 1 {
 			bet_s := BJ[1]
 			bet_i, _ := strconv.Atoi(bet_s)
@@ -1502,7 +1391,7 @@ func casino(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 
 func store(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 
-	if m.ChannelID == eventsnbots_c || m.ChannelID == casino_c || hard_admin(s, m.Author.ID) || hard_support(s, m.Author.ID) || m.Author.ID == kazka_u || m.ChannelID == botroom_c {
+	/*	if m.ChannelID == BotSpam_c || m.Author.ID == kazka_u {
 
 		//!buy
 		if m.Content == "!buy" {
@@ -1541,18 +1430,20 @@ func store(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 			s.ChannelMessageSend(m.ChannelID, "You must be in the color role to change the color of the color role.")
 			return true
 		}
-	}
+	}*/
 	return true
 }
 
 func test_room(CHANNELID string) bool {
-	if CHANNELID == "442493156584587265" || CHANNELID == "410522839548952596" || CHANNELID == "403460796106932225" {
-		return true
-	} else {
-		return false
-	}
+	/*	if CHANNELID == "442493156584587265" || CHANNELID == "410522839548952596" || CHANNELID == "403460796106932225" {
+			return true
+		} else {
+			return false
+		}*/
+	return false
 }
 
+/*
 func moderation_log(s *discordgo.Session, who string, what int, where string, towho string, why string) {
 	//	410522993102422026 #moderationlog ID
 	if what == 1 { // squirrel
@@ -1602,6 +1493,7 @@ func hard_support(s *discordgo.Session, AUTHORID string) bool {
 	}
 	return false
 }
+*/
 
 func activity_tracker(m *discordgo.MessageCreate) {
 
