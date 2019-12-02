@@ -1,33 +1,25 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"net/http"
-	"net/url"
 	"os"
-	"os/user"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
+	//"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/youtube/v3"
 )
 
-const missingClientSecretsMessage = `Please configure OAuth 2.0`
-
 const xp_multiplier = 1.0
+
+const defaultprefix string = "cb!"
 
 // Append this string with error messages
 var error_string string
@@ -53,7 +45,48 @@ type blackjack_game struct {
 	playerhand int
 }
 
+type DICTIONARYENTRY struct {
+	Keyword    string
+	Definition string
+}
+
+type CHANNEL struct {
+	Id          string
+	Blacklisted bool
+	Whitelisted bool
+	About       string
+}
+
+type SERVER struct {
+	Id         string
+	Prefix     string
+	Dictionary []DICTIONARYENTRY
+	Channels   []CHANNEL
+}
+
 type MEMBER struct {
+	server string
+
+	xpi int
+	xps string
+
+	leveli int
+	levels string
+
+	xpuntills   string
+	untillwhats string
+
+	slicesi int
+	slicess string
+
+	IAM string
+}
+
+var SERVERS []SERVER
+
+var GLOBALDICTIONARY []DICTIONARYENTRY
+
+type GLOBALMEMBER struct {
 	xpi int
 	xps string
 
@@ -91,162 +124,13 @@ const BotSpam_c string = "632734731863064597"
 
 const kazka_u string = "340665281791918092"
 
-const CAD_s string = "409907314045353984"
-
-/*
-const modlog_c string = "410522993102422026"
-const announcements_c string = "435758751782535169"
-const casino_c string = "451255642087358464"
-const botroom_c string = "442493156584587265"
-const staff_r string = "410522026868998146"
-const admin_r string = "410521789782032384"
-const moderator_r string = "410521251304570882"
-const support_r string = "458036299732090892"
-const color_r string = "534412981694627864"
-*/
 var CBPresence *discordgo.Presence
 
-///////////////////////
-/////////////////////// google time
-///////////////////////
-var (
-	query      = flag.String("query", "Fidget Spinner minecraft tutorial", "Search term")
-	maxResults = flag.Int64("max-results", 25, "Max YouTube results")
-)
-
-///////////////////////
-/////////////////////// google time
-///////////////////////
-
-// getClient uses a Context and Config to retrieve a Token
-// then generate a Client. It returns the generated Client.
-func getClient(ctx context.Context, config *oauth2.Config) *http.Client {
-	cacheFile, err := tokenCacheFile()
-	if err != nil {
-		log.Fatalf("Unable to get path to cached credential file. %v", err)
-	}
-	tok, err := tokenFromFile(cacheFile)
-	if err != nil {
-		tok = getTokenFromWeb(config)
-		saveToken(cacheFile, tok)
-	}
-	return config.Client(ctx, tok)
-}
-
-// getTokenFromWeb uses Config to request a Token.
-// It returns the retrieved Token.
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
-
-	var code string
-	if _, err := fmt.Scan(&code); err != nil {
-		log.Fatalf("Unable to read authorization code %v", err)
-	}
-
-	tok, err := config.Exchange(oauth2.NoContext, code)
-	if err != nil {
-		log.Fatalf("Unable to retrieve token from web %v", err)
-	}
-	return tok
-}
-
-// tokenCacheFile generates credential file path/filename.
-// It returns the generated credential path/filename.
-func tokenCacheFile() (string, error) {
-	usr, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-	tokenCacheDir := filepath.Join(usr.HomeDir, ".credentials")
-	os.MkdirAll(tokenCacheDir, 0700)
-	return filepath.Join(tokenCacheDir,
-		url.QueryEscape("youtube-go-quickstart.json")), err
-}
-
-// tokenFromFile retrieves a Token from a given file path.
-// It returns the retrieved Token and any read error encountered.
-func tokenFromFile(file string) (*oauth2.Token, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	t := &oauth2.Token{}
-	err = json.NewDecoder(f).Decode(t)
-	defer f.Close()
-	return t, err
-}
-
-// saveToken uses a file path to create a file and store the
-// token in it.
-func saveToken(file string, token *oauth2.Token) {
-	fmt.Printf("Saving credential file to: %s\n", file)
-	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		log.Fatalf("Unable to cache oauth token: %v", err)
-	}
-	defer f.Close()
-	json.NewEncoder(f).Encode(token)
-}
-
-func handleError(err error, message string) {
-	if message == "" {
-		message = "Error making API call"
-	}
-	if err != nil {
-		log.Fatalf(message+": %v", err.Error())
-	}
-}
-
-func channelsListByUsername(service *youtube.Service, part string, forUsername string) {
-	call := service.Channels.List(part)
-	call = call.ForUsername(forUsername)
-	response, err := call.Do()
-	handleError(err, "")
-	fmt.Println(fmt.Sprintf("This channel's ID is %s. Its title is '%s', "+
-		"and it has %d views.",
-		response.Items[0].Id,
-		response.Items[0].Snippet.Title,
-		response.Items[0].Statistics.ViewCount))
-}
-
-func printIDs(sectionName string, matches map[string]string) {
-	fmt.Printf("%v:\n", sectionName)
-	for id, title := range matches {
-		fmt.Printf("[%v] %v\n", id, title)
-	}
-	fmt.Printf("\n\n")
-}
+var state discordgo.State
 
 func main() {
-	//////////////////////////////////////
-	////////////////////////////////////// youtube
-	//////////////////////////////////////
-	ctx := context.Background()
 
-	b, err := ioutil.ReadFile("client_secret.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	// If modifying these scopes, delete your previously saved credentials
-	// at ~/.credentials/youtube-go-quickstart.json
-	config, err := google.ConfigFromJSON(b, youtube.YoutubeReadonlyScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	client := getClient(ctx, config)
-	service, err := youtube.New(client)
-
-	handleError(err, "Error creating YouTube client")
-
-	channelsListByUsername(service, "snippet,contentDetails,statistics", "GoogleDevelopers")
-	//////////////////////////////////////
-	////////////////////////////////////// youtube
-	//////////////////////////////////////
-
-	b, err = ioutil.ReadFile("TOKEN.txt") // b has type []byte
+	b, err := ioutil.ReadFile("TOKEN.txt") // b has type []byte
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -282,40 +166,19 @@ func main() {
 		return
 	}
 
-	///
-	/// youtube search
-	///
+	LoadServersConfig()
+	LoadGlobalDictionary()
 
-	call := service.Search.List("id,snippet").
-		Q(*query).
-		MaxResults(*maxResults)
-	response, err := call.Do()
-	handleError(err, "")
-
-	// Group video, channel, and playlist results in separate lists.
-	videos := make(map[string]string)
-	channels := make(map[string]string)
-	playlists := make(map[string]string)
-
-	// Iterate through each item and add it to the correct list.
-	for _, item := range response.Items {
-		switch item.Id.Kind {
-		case "youtube#video":
-			videos[item.Id.VideoId] = item.Snippet.Title
-		case "youtube#channel":
-			channels[item.Id.ChannelId] = item.Snippet.Title
-		case "youtube#playlist":
-			playlists[item.Id.PlaylistId] = item.Snippet.Title
+	state = *discordgo.NewState()
+	//load / create state
+	/*	{
+		state.MaxMessageCount = 50
+		for i, currentserver := range SERVERS {
+			hmm, _ := s.Guild(currentserver.Id)
+			fmt.Println(hmm, i)
 		}
-	}
 
-	printIDs("Videos", videos)
-	printIDs("Channels", channels)
-	printIDs("Playlists", playlists)
-
-	///
-	/// youtube search
-	///
+	}*/
 
 	fmt.Println("Bot is running POGGERS")
 
@@ -323,48 +186,83 @@ func main() {
 	return
 }
 
-/*
-func messageDeleteHandler(s *discordgo.Session, m *discordgo.MessageDelete) {
+//add server
 
-	//s.ChannelMessageSend("565246284684984320", "User "+m.Author.Username+", <@"+m.Author.ID+"> has deleted the following message in channel <#"+m.ChannelID+">.")
+func SaveServersConfig() {
+	savedata, err := json.Marshal(SERVERS)
+	if err != nil {
+		fmt.Println(err.Error() + " Error SaveServersConfig 1")
+		return
+	}
 
-	s.ChannelMessageSend("565246284684984320", ":) why does this cause panic??????")
+	err = ioutil.WriteFile("SERVERS.config", savedata, 0644)
+	if err != nil {
+		fmt.Println(err.Error() + " Error SaveServersConfig 2")
+		return
+	}
+}
 
-}*/
+func LoadServersConfig() {
+
+	savedata, err := ioutil.ReadFile("SERVERS.config")
+	if err != nil {
+		fmt.Println(err.Error() + " Error LoadServersConfig 1")
+		return
+	}
+	json.Unmarshal(savedata, &SERVERS)
+	if err != nil {
+		fmt.Println(err.Error() + " Error LoadServersConfig 2")
+		return
+	}
+}
+
+func AddGlobalDictionaryEntry(keyword string, definition string) {
+
+	var dictionaryentry DICTIONARYENTRY
+	dictionaryentry.Keyword = keyword
+	dictionaryentry.Definition = definition
+
+	GLOBALDICTIONARY = append(GLOBALDICTIONARY, dictionaryentry)
+
+}
+
+func SaveGlobalDictionary() {
+
+	savedata, err := json.Marshal(GLOBALDICTIONARY)
+	if err != nil {
+		fmt.Println(err.Error() + " Error SaveGlobalDictionary 1")
+		return
+	}
+
+	err = ioutil.WriteFile("GLOBALDICTIONARY.config", savedata, 0644)
+	if err != nil {
+		fmt.Println(err.Error() + " Error SaveGlobalDictionary 2")
+		return
+	}
+}
+
+func LoadGlobalDictionary() {
+
+	savedata, err := ioutil.ReadFile("GLOBALDICTIONARY.config")
+	if err != nil {
+		fmt.Println(err.Error() + " Error LoadGlobalDictionary 1")
+		return
+	}
+	json.Unmarshal(savedata, &GLOBALDICTIONARY)
+	if err != nil {
+		fmt.Println(err.Error() + " Error LoadGlobalDictionary 2")
+		return
+	}
+}
 
 func VoiceSpeakingUpdateHandler(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingUpdate) {
-
-	/*
-		VCRECIEVE := make(chan *discordgo.Packet)
-		VCSEND := make(chan []int16)
-
-		dgvoice.ReceivePCM(VC, VCRECIEVE)
-
-		dgvoice.SendPCM(VC, VCSEND)
-	*/
-	//	if vs.UserID != BotID {
 	VCRECIEVE := <-vc.OpusRecv
 	fmt.Println(VCRECIEVE)
 	vc.Speaking(true)
 	vc.OpusSend <- VCRECIEVE.Opus
 	vc.Speaking(false)
 
-	//	}
 }
-
-/*
-func VoiceStateUpdateHandler(vs *discordgo.VoiceStateUpdate) {
-
-}*/
-
-/*func presenceHandler(s *discordgo.Session, p *discordgo.PresenceUpdate) {
-
-	if p.Presence.User.Username != "" {
-		//logme := p.Presence.User.Username + " Status " + p.Presence.Status
-
-		//fmt.Println(logme)
-	}
-}*/
 
 func subreactionHandler(s *discordgo.Session, r *discordgo.MessageReactionRemove) {
 	if r.ChannelID == Roles_r {
@@ -398,10 +296,6 @@ func subreactionHandler(s *discordgo.Session, r *discordgo.MessageReactionRemove
 }
 
 func addreactionHandler(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
-
-	/*if r.ChannelID == Roles_r {
-		s.MessageReactionAdd(Roles_r, r.MessageID, r.Emoji.Name)
-	}*/
 
 	if r.ChannelID == Roles_r {
 		switch r.Emoji.Name {
@@ -456,13 +350,117 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				// terminate
 			}
 		}
-		if strings.Contains(m.Content, "bread") || strings.Contains(m.Content, "🍞") || strings.Contains(m.Content, "🥖") {
+		//testshit needs to move
 
+		for i, currentserver := range SERVERS {
+			if m.GuildID == currentserver.Id {
+				//SERVERADMIN
+				{
+
+					/*					memberid, _ := s.GuildMember(m.GuildID, m.Author.ID)
+										for i, currentrole_s := range memberid.Roles {
+											currentrole, _ := state.Role(m.GuildID, currentrole_s)
+
+
+										}*/
+
+				}
+				if m.Content == SERVERS[i].Prefix+"d" {
+					var gdk_s string
+					var ldk_s string
+					for _, currententry := range GLOBALDICTIONARY {
+						gdk_s += "\t" + currententry.Keyword
+					}
+					for _, currententry := range currentserver.Dictionary {
+						ldk_s += "\t" + currententry.Keyword
+					}
+					s.ChannelMessageSend(m.ChannelID, "Now do the same command, but with one of these keywords following: "+gdk_s+ldk_s)
+				} else if strings.HasPrefix(m.Content, SERVERS[i].Prefix+"d") {
+					trim := strings.TrimPrefix(m.Content, SERVERS[i].Prefix+"d")
+					tolower := strings.ToLower(trim)
+					var definitions_s string
+					for _, currententry := range GLOBALDICTIONARY {
+						if strings.Contains(tolower, currententry.Keyword) {
+							definitions_s += currententry.Definition + "\n"
+						}
+
+					}
+					for _, currententry := range currentserver.Dictionary {
+						if strings.Contains(tolower, currententry.Keyword) {
+							definitions_s += currententry.Definition + "\n"
+						}
+					}
+					if definitions_s == "" {
+						definitions_s = "That shit dont mean shit, but you're still valid"
+					}
+					s.ChannelMessageSend(m.ChannelID, definitions_s)
+				}
+			}
 		}
-		if m.Author.ID == "" {
+		//kazkashit needs to move
+		if m.Author.ID == kazka_u {
+			for _, currentserver := range SERVERS {
+				if m.GuildID == currentserver.Id {
 
+					if strings.HasPrefix(m.Content, "kazka!"+"state") {
+						fmt.Println("here you go ", state.Guilds)
+					}
+
+					if strings.HasPrefix(m.Content, "kazka!"+"help") {
+						s.ChannelMessageSend(m.ChannelID, "kazka!help,\tkazka!ADDSERVER,\tkazka!globaldefine")
+					}
+
+					if strings.HasPrefix(m.Content, "kazka!"+"ADDSERVER") {
+						s.ChannelMessageSend(m.ChannelID, "This server is already added dickhead.")
+					}
+
+					if strings.HasPrefix(m.Content, "kazka!"+"globaldefine") {
+						trim := strings.TrimPrefix(m.Content, "kazka!"+"globaldefine")
+						trim = strings.TrimSpace(trim)
+						split := strings.SplitN(trim, " ", 2)
+						var newentry DICTIONARYENTRY
+						newentry.Keyword = strings.ToLower(split[0])
+						newentry.Definition = split[1]
+
+						for i, currententry := range GLOBALDICTIONARY {
+							if currententry.Keyword == newentry.Keyword {
+								if currententry.Definition == newentry.Definition {
+									s.ChannelMessageSend(m.ChannelID, "Kazka, FR this shit already defined dumb ass.")
+								} else {
+									if strings.ToLower(newentry.Definition) == "delete" {
+										GLOBALDICTIONARY = append(GLOBALDICTIONARY[:i], GLOBALDICTIONARY[i+1:]...)
+										s.ChannelMessageSend(m.ChannelID, "Succsessfully undefined: \""+newentry.Keyword+"\"")
+										SaveGlobalDictionary()
+									} else {
+										GLOBALDICTIONARY[i].Definition = newentry.Definition
+										s.ChannelMessageSend(m.ChannelID, "Redefined \""+currententry.Keyword+"\" from \""+currententry.Definition+"\"to \""+newentry.Definition+"\"")
+										SaveGlobalDictionary()
+									}
+								}
+								return
+							}
+						}
+						if strings.ToLower(newentry.Definition) == "delete" {
+							s.ChannelMessageSend(m.ChannelID, "That already doesnt exist 🤔")
+						} else {
+							s.ChannelMessageSend(m.ChannelID, "Successfully Globally Defined!\nKeyword: "+split[0]+"\nDefinition: "+split[1])
+							GLOBALDICTIONARY = append(GLOBALDICTIONARY, newentry)
+						}
+						SaveGlobalDictionary()
+					}
+
+					return
+				}
+			}
+			if m.Content == "kazka!"+"ADDSERVER" {
+				var newserver SERVER
+				newserver.Id = m.GuildID
+				newserver.Prefix = defaultprefix
+				SERVERS = append(SERVERS, newserver)
+				s.ChannelMessageSend(m.ChannelID, "Server Added, use "+defaultprefix+"help for a list of commands")
+				SaveServersConfig()
+			}
 		}
-
 	}
 }
 
@@ -545,14 +543,6 @@ func keywords(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 		s.MessageReactionAdd(m.ChannelID, m.ID, "a:Clap:434360842620895253")
 	}
 
-	/*	if strings.Contains(m.Content, "https://discord.gg/") || strings.Contains(m.Content, "discord.gg/") {
-		if hard_admin(s, m.Author.ID) == false {
-			s.ChannelMessageDelete(m.ChannelID, m.ID)
-			s.ChannelMessageSend(m.ChannelID, "OOF sorry, you cant link to discord channels. You can @ a staff member and ask them to link to it if its ok!")
-			s.ChannelMessageSend(modlog_c, "Deleted message from <@"+m.Author.ID+"> in channel <#"+m.ChannelID+"> that contained a discord link.: ``"+m.Content+"``")
-		}
-	}*/
-
 	if m.GuildID == "" {
 		DMCHANNEL, _ := s.UserChannelCreate(m.Author.ID)
 		s.ChannelMessageSend(DMCHANNEL.ID, "Hello "+m.Author.Username+".")
@@ -589,7 +579,7 @@ func commands(s *discordgo.Session, m *discordgo.MessageCreate) (err bool) {
 
 		//!who
 		if m.Content == "!who" {
-			s.ChannelMessageSend(m.ChannelID, "I am a program running off Kazka's computer that he is currently working on for our discord. If you want to see what I can do, you can type ``!help``")
+			s.ChannelMessageSend(m.ChannelID, "I am a program running off Kazka's computer that he is currently working on for Asexual Discords. If you want to see what I can do, you can type ``!help``")
 		}
 
 		if strings.HasPrefix(m.Content, "!xp") || strings.HasPrefix(m.Content, "!xpc") || strings.HasPrefix(m.Content, "!slices") || strings.HasPrefix(m.Content, "!slicesc") {
@@ -714,9 +704,6 @@ Anywhere Commands:
 !hug - when u wanna hug someone
 !d / !define / !dictionary - gives you a list of words we have defined
 !info - gives room info (please use passive aggressively)
-
-Support Commands
-!squirrel [reason] - used to 'reset' a chat room, reason required
 
 Staff Commands:
 !mute [@mention] [reason]
@@ -1083,7 +1070,7 @@ Staff Commands:
 			}*/
 
 		if strings.HasPrefix(m.Content, "!idban") {
-			err := s.GuildBanCreate(CAD_s, strings.TrimPrefix(m.Content, "!idban "), 0)
+			err := s.GuildBanCreate(Pride_Factory_s, strings.TrimPrefix(m.Content, "!idban "), 0)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "!idban error: "+err.Error())
 			} else {
@@ -1105,7 +1092,7 @@ Staff Commands:
 			mute := false
 			deaf := false
 			var err error
-			VC, err = s.ChannelVoiceJoin(CAD_s, "524267098977992709", mute, deaf)
+			VC, err = s.ChannelVoiceJoin(Pride_Factory_s, "524267098977992709", mute, deaf)
 			if err != nil {
 				fmt.Println(err.Error() + " Error !test")
 			} else {
